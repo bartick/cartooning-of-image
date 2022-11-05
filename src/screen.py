@@ -1,21 +1,42 @@
-import tkinter
+from tkinter import *
+from PIL import ImageTk,Image
+import os
+from tkinter import filedialog
+import tkinter as tk
 
-class Screen:
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.root = tkinter.Tk()
-        self.canvas = tkinter.Canvas(self.root, width=self.width, height=self.height)
-        self.canvas.pack()
+def showimage():
+    fln=filedialog.askopenfilename(initialdir = os.getcwd(),title="Select Image File",filetypes=(("JPG FIle", "*.jpg"),("PNG File", "*.png"),("ALL Files","*.*")))
+    img = Image.open(fln)
+    img = ImageTk.PhotoImage(img)
+    lbl.configure(image=img)
+    lbl.image=img
+def convert():
+    return True
+def save():
+    return True
+root=Tk()
 
-    def draw(self, x, y, color):
-        self.canvas.create_rectangle(x, y, x+100, y+100, fill=color)
-        self.canvas.update()
-    
-    def showImage(self, url):
-        self.image = tkinter.PhotoImage(file=url)
-        self.canvas.create_image(0, 0, anchor=tkinter.NW, image=self.image)
-        self.canvas.update()
 
-    def mainloop(self):
-        self.root.mainloop()
+
+frn=Frame(root)
+frn.pack(side=BOTTOM,padx=15,pady=15)
+
+lbl=Label(root)
+lbl.pack()
+
+btn=Button(frn,text="Browse Image",command=showimage)
+btn.pack(side=tk.LEFT)
+
+btn3=Button(frn,text="Save", command=save)
+btn3.pack(side=tk.LEFT,padx=5)
+
+btn2=Button(frn,text="Convert",command=convert)
+btn2.pack(side=tk.LEFT,padx =10)
+
+
+
+
+
+root.title("CARTOONING OF IMAGE")
+root.geometry("800x700")
+root.mainloop()
