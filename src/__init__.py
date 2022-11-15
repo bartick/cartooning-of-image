@@ -1,1 +1,1 @@
-# this file just makes it a package
+from .screen import Screen

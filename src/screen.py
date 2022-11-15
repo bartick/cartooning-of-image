@@ -1,42 +1,62 @@
-from tkinter import *
+from tkinter import filedialog, Tk, Frame, TOP, Label, Button, BOTTOM
 from PIL import ImageTk,Image
 import os
-from tkinter import filedialog
-import tkinter as tk
+from typing import Optional
 
-def showimage():
-    fln=filedialog.askopenfilename(initialdir = os.getcwd(),title="Select Image File",filetypes=(("JPG FIle", "*.jpg"),("PNG File", "*.png"),("ALL Files","*.*")))
-    img = Image.open(fln)
-    img = ImageTk.PhotoImage(img)
-    lbl.configure(image=img)
-    lbl.image=img
-def convert():
-    return True
-def save():
-    return True
-root=Tk()
+class Screen:
+    def __init__(self, root: Tk, width: int, height: int, title: Optional[str]="Screen", icon: Optional[str]="", resizable: Optional[bool]=True) -> None:
+        self.root = root
+        self.width = width
+        self.height = height
+        self.resizable = resizable
+        self.title = title
+        self.icon = icon
 
+    def create(self) -> None:
+        self.root.title(self.title)
+        self.root.iconbitmap(self.icon)
+        self.root.geometry(f"{self.width}x{self.height}")
+        self.root.resizable(self.resizable, self.resizable)
 
+        self.labelFrame = Frame(self.root, width=self.width, height=self.height)
+        self.labelFrame.pack(side=TOP)
 
-frn=Frame(root)
-frn.pack(side=BOTTOM,padx=15,pady=15)
+        self.frame = Frame(self.root, width=self.width, height=self.height)
+        self.frame.pack(side=BOTTOM, padx=10, pady=10)
 
-lbl=Label(root)
-lbl.pack()
+        self.label = Label(self.labelFrame)
+        self.label.pack(side=TOP, padx=10, pady=10)
 
-btn=Button(frn,text="Browse Image",command=showimage)
-btn.pack(side=tk.LEFT)
+        self.browseButton = Button(self.frame, text="Browse", command=self.browse)
+        self.browseButton.pack(side="left")
 
-btn3=Button(frn,text="Save", command=save)
-btn3.pack(side=tk.LEFT,padx=5)
+        self.convertButton = Button(self.frame, text="Convert", command=self.convert)
+        self.convertButton.pack(side="left", padx=5)
 
-btn2=Button(frn,text="Convert",command=convert)
-btn2.pack(side=tk.LEFT,padx =10)
-
-
-
-
-
-root.title("CARTOONING OF IMAGE")
-root.geometry("800x700")
-root.mainloop()
+        self.saveButton = Button(self.frame, text="Save", command=self.save)
+        self.saveButton.pack(side="left", padx=5)
+    
+    def browse(self) -> None:
+        fln = filedialog.askopenfilename(initialdir=os.getcwd(),title="Select Image File",filetypes=(("JPG FIle", "*.jpg"),("PNG File", "*.png"),("ALL Files","*.*")))
+        self.image = Image.open(fln)
+        self.imageSize = self.image.size
+        imageResizer = (self.width if self.width < self.imageSize[0] else self.imageSize[0], self.imageSize[1] if self.imageSize[1] < self.height-70 else self.height-70)
+        self.image = self.image.resize(imageResizer, Image.ANTIALIAS)
+        self.image = ImageTk.PhotoImage(self.image)
+        self.label.configure(image=self.image)
+        self.label.image=self.image
+    
+    def convert(self) -> None:
+        self.image = self.image.convert("L")
+        self.image = ImageTk.PhotoImage(self.image)
+        self.label.config(image=self.image)
+        self.label.image = self.image
+    
+    def save(self) -> None:
+        self.filename = filedialog.asksaveasfilename(initialdir=os.getcwd(), title="Save as", filetypes=(("png files", "*.png"), ("jpg files", "*.jpg"), ("jpeg files", "*.jpeg")))
+        imageToSave: Image = ImageTk.getimage(self.image)
+        imageToSave.resize(self.imageSize, Image.ANTIALIAS).save(self.filename)
+    
+    @property
+    def run(self) -> None:
+        self.root.mainloop()

@@ -1,5 +1,13 @@
-from src import screen
+from src import Screen
+from tkinter import Tk
 
-product_screen = screen.Screen(800, 600)
-product_screen.showImage('unknown.png')
-product_screen.mainloop()
+if __name__ == "__main__":
+    screen = Screen(
+        root=Tk(),
+        width=1000,
+        height=750,
+        title="CARTOONING OF IMAGE",
+        resizable=True,
+    )
+    screen.create()
+    screen.run
