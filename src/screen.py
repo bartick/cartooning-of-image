@@ -5,6 +5,9 @@ from typing import Optional
 
 class Screen:
     def __init__(self, root: Tk, width: int, height: int, title: Optional[str]="Screen", icon: Optional[str]="", resizable: Optional[bool]=True) -> None:
+        """
+            Screen class for creating a screen for the application to convert image to cartoon.
+        """
         self.root = root
         self.width = width
         self.height = height
@@ -13,6 +16,10 @@ class Screen:
         self.icon = icon
 
     def create(self) -> None:
+        """
+            Create the screen for the application.
+            This method creates the screen for the application and sets proper buttons and labels.
+        """
         self.root.title(self.title)
         self.root.iconbitmap(self.icon)
         self.root.geometry(f"{self.width}x{self.height}")
@@ -37,6 +44,9 @@ class Screen:
         self.saveButton.pack(side="left", padx=5)
     
     def browse(self) -> None:
+        """
+            Browse for the image to convert to cartoon.
+        """
         fln = filedialog.askopenfilename(initialdir=os.getcwd(),title="Select Image File",filetypes=(("JPG FIle", "*.jpg"),("PNG File", "*.png"),("ALL Files","*.*")))
         self.image = Image.open(fln)
         self.imageSize = self.image.size
@@ -47,12 +57,15 @@ class Screen:
         self.label.image=self.image
     
     def convert(self) -> None:
-        self.image = self.image.convert("L")
-        self.image = ImageTk.PhotoImage(self.image)
-        self.label.config(image=self.image)
-        self.label.image = self.image
+        """
+            Convert the image to cartoon.
+        """
+        pass
     
     def save(self) -> None:
+        """
+            Save the image to the desired location.
+        """
         self.filename = filedialog.asksaveasfilename(initialdir=os.getcwd(), title="Save as", filetypes=(("png files", "*.png"), ("jpg files", "*.jpg"), ("jpeg files", "*.jpeg")))
         imageToSave: Image = ImageTk.getimage(self.image)
         imageToSave.resize(self.imageSize, Image.ANTIALIAS).save(self.filename)
