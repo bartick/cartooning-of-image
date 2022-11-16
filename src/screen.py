@@ -2,9 +2,11 @@ from tkinter import filedialog, Tk, Frame, TOP, Label, Button, BOTTOM
 from PIL import ImageTk,Image
 import os
 from typing import Optional
-import cv2
-from numpy import uint8
-from sklearn.cluster import KMeans
+from cv2 import imread, cvtColor, COLOR_BGR2RGB, COLOR_RGB2GRAY, \
+    medianBlur, TERM_CRITERIA_EPS, TERM_CRITERIA_MAX_ITER, adaptiveThreshold, \
+        ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, kmeans, KMEANS_RANDOM_CENTERS, \
+            bilateralFilter, bitwise_and, COLOR_RGB2BGR
+from numpy import float32, uint8
 
 class Screen:
     def __init__(self, root: Tk, width: int, height: int, title: Optional[str]="Screen", icon: Optional[str]="", resizable: Optional[bool]=True) -> None:
@@ -63,28 +65,32 @@ class Screen:
         """
             Convert the image to cartoon.
         """
-        img = cv2.imread(self.imageFile)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = imread(self.imageFile)
+        img = cvtColor(img, COLOR_BGR2RGB)
 
         line_size = 7
         blur_value = 7
-        gray_img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        gray_blur = cv2.medianBlur(gray_img, blur_value)
-        edges = cv2.adaptiveThreshold(gray_blur, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, line_size, blur_value)
+        gray_img = cvtColor(img, COLOR_RGB2GRAY)
+        gray_blur = medianBlur(gray_img, blur_value)
+        edges = adaptiveThreshold(gray_blur, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, line_size, blur_value)
 
         k = 7
-        data = img.reshape(-1, 3)
-        kmeans = KMeans(n_clusters=k, random_state=42).fit(data)
-        img_reduced = kmeans.cluster_centers_[kmeans.labels_]
-        img_reduced = img_reduced.reshape(img.shape)
-        img_reduced = img_reduced.astype(uint8)
+        data = float32(img).reshape((-1, 3))
 
-        blurred = cv2.bilateralFilter(img_reduced, d=7, sigmaColor=200,sigmaSpace=200)
-        cartoon = cv2.bitwise_and(blurred, blurred, mask=edges)
+        # Determine criteria
+        criteria = (TERM_CRITERIA_EPS + TERM_CRITERIA_MAX_ITER, 20, 0.001)
 
-        # cartoon_ = cv2.cvtColor(cartoon, cv2.COLOR_RGB2BGR)
+        # Implementing K-Means
+        ret, label, center = kmeans(data, k, None, criteria, 10, KMEANS_RANDOM_CENTERS)
+        center = uint8(center)
+        result = center[label.flatten()]
+        result = result.reshape(img.shape)
 
-        self.image = Image.fromarray(cartoon)
+        blurred = bilateralFilter(result, d=7, sigmaColor=200, sigmaSpace=200)
+        cartoon = bitwise_and(blurred, blurred, mask=edges)
+        cartoon_ = cvtColor(cartoon, COLOR_RGB2BGR)
+
+        self.image = Image.fromarray(cartoon_)
         self.image = self.image.resize(self.imageResizer, Image.ANTIALIAS)
         self.image = ImageTk.PhotoImage(self.image)
         self.label.configure(image=self.image)
