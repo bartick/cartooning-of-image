@@ -3,7 +3,8 @@ from PIL import ImageTk,Image
 import os
 from typing import Optional
 import cv2
-from .cartoonize import caart
+from numpy import uint8
+from sklearn.cluster import KMeans
 
 class Screen:
     def __init__(self, root: Tk, width: int, height: int, title: Optional[str]="Screen", icon: Optional[str]="", resizable: Optional[bool]=True) -> None:
@@ -49,7 +50,7 @@ class Screen:
         """
             Browse for the image to convert to cartoon.
         """
-        self.imageFile = filedialog.askopenfilename(initialdir=os.getcwd(),title="Select Image File",filetypes=(("JPG FIle", "*.jpg"),("PNG File", "*.png"),("ALL Files","*.*")))
+        self.imageFile = filedialog.askopenfilename(initialdir=os.getcwd(),title="Select Image File",filetypes=(("JPG FIle", "*.jpg"),("PNG File", "*.png"), ("JPEG File", "*.jpeg"),("ALL Files","*.*")))
         self.image = Image.open(self.imageFile)
         self.imageSize = self.image.size
         self.imageResizer = (self.width if self.width < self.imageSize[0] else self.imageSize[0], self.imageSize[1] if self.imageSize[1] < self.height-70 else self.height-70)
@@ -62,10 +63,28 @@ class Screen:
         """
             Convert the image to cartoon.
         """
-        self.originalImage = cv2.imread(self.imageFile)
-        self.image = caart(self.originalImage)
+        img = cv2.imread(self.imageFile)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        self.image = Image.fromarray(self.image)
+        line_size = 7
+        blur_value = 7
+        gray_img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        gray_blur = cv2.medianBlur(gray_img, blur_value)
+        edges = cv2.adaptiveThreshold(gray_blur, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, line_size, blur_value)
+
+        k = 7
+        data = img.reshape(-1, 3)
+        kmeans = KMeans(n_clusters=k, random_state=42).fit(data)
+        img_reduced = kmeans.cluster_centers_[kmeans.labels_]
+        img_reduced = img_reduced.reshape(img.shape)
+        img_reduced = img_reduced.astype(uint8)
+
+        blurred = cv2.bilateralFilter(img_reduced, d=7, sigmaColor=200,sigmaSpace=200)
+        cartoon = cv2.bitwise_and(blurred, blurred, mask=edges)
+
+        # cartoon_ = cv2.cvtColor(cartoon, cv2.COLOR_RGB2BGR)
+
+        self.image = Image.fromarray(cartoon)
         self.image = self.image.resize(self.imageResizer, Image.ANTIALIAS)
         self.image = ImageTk.PhotoImage(self.image)
         self.label.configure(image=self.image)
